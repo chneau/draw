@@ -6,18 +6,21 @@ import (
 	"os/signal"
 	"runtime"
 
+	"github.com/chneau/draw/pkg/hub"
+
 	_ "github.com/chneau/draw/pkg/statik"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/rakyll/statik/fs"
 )
 
 func init() {
+	gracefulExit()
 	gin.SetMode(gin.ReleaseMode)
 	if runtime.GOOS == "windows" {
 		gin.DisableConsoleColor()
 	}
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	gracefulExit()
 }
 
 func ce(err error, msg string) {
@@ -38,12 +41,17 @@ func gracefulExit() {
 func main() {
 	port := "3000"
 	fs, err := fs.New()
+	hub := hub.New()
 	ce(err, "fs.New()")
 	r := gin.Default()
 	r.Use(gin.Recovery())
 	r.GET("/ws", func(c *gin.Context) {
-		// handler := websocket.Handler(EchoServer)
-		// handler.ServeHTTP(c.Writer, c.Req)
+		conn, err := websocket.Upgrade(c.Writer, c.Request, c.Writer.Header(), 1024, 1024)
+		ce(err, "websocket.Upgrade")
+		hub.AddConn(conn)
+	})
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(307, "/draw")
 	})
 	r.StaticFS("/draw", fs)
 	hostname, err := os.Hostname()
