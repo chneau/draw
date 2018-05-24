@@ -5,7 +5,7 @@ window.onload = () => {
     let ctx = canvas.getContext("2d");
     ctx.canvas.width = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
-    let socket = new WebSocket("ws://localhost:3000/ws");
+    let socket = new WebSocket(`ws://${location.host}/ws`);
     let isDrawing = false;
     let color = 0;
     var previous = null;
