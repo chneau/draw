@@ -8,14 +8,25 @@ window.onload = () => {
     let socket = new WebSocket("ws://localhost:3000/ws");
     let isDrawing = false;
     let color = 0;
+    var previous = null;
     socket.onmessage = (event) => {
         let msg = JSON.parse(event.data);
-        ctx.fillStyle = kelly[msg.c];
-        ctx.fillRect(msg.x, msg.y, 15, 15);
+        ctx.strokeStyle = kelly[msg.c];
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(msg.s[0], msg.s[1]);
+        ctx.lineTo(msg.s[2], msg.s[3]);
+        ctx.closePath();
+        ctx.stroke();
     };
     canvas.onmousemove = (event) => {
         if (event.which != 0) {
-            socket.send(JSON.stringify({ x: event.pageX, y: event.pageY, c: color % kelly.length }));
+            if (previous != null) {
+                socket.send(JSON.stringify({ s: [previous.pageX, previous.pageY, event.pageX, event.pageY], c: color % kelly.length }));
+            }
+            previous = event;
+        } else {
+            previous = null;
         }
     };
     canvas.oncontextmenu = (event) => {

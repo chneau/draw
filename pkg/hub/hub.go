@@ -5,9 +5,8 @@ import (
 )
 
 type msg struct {
-	X int `json:"x"`
-	Y int `json:"y"`
-	C int `json:"c"`
+	S [4]int `json:"s"`
+	C int    `json:"c"`
 }
 
 // Hub is the class that takes care of getting all connections
@@ -39,6 +38,10 @@ func (h *Hub) keepReading(conn *websocket.Conn) {
 				break
 			}
 			h.cache = append(h.cache, m)
+			// l := len(h.cache)
+			// if l > 100000 {
+			// 	h.cache = h.cache[l-90000 : l]
+			// }
 			h.read <- m
 		}
 	}()
