@@ -2,7 +2,7 @@
 .ONESHELL:
 .NOTPARALLEL:
 .EXPORT_ALL_VARIABLES:
-.PHONY: run deps build clean exec
+.PHONY: run deps build clean exec dockerbuild
 
 run: buildPublic build exec clean
 
@@ -22,3 +22,5 @@ clean:
 deps:
 	go get -d -u -v ./...
 
+dockerbuild:
+	docker build -t chneau/draw:latest .
