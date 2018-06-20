@@ -3,7 +3,7 @@ WORKDIR /go/src/github.com/chneau/draw
 COPY . .
 
 ENV CGO_ENABLED=0
-RUN go get -v
+RUN go get -v ./...
 RUN go build -o /app -ldflags '-s -w -extldflags "-static"'
 
 FROM chneau/upx:latest
