@@ -40,22 +40,19 @@ func gracefulExit() {
 
 func main() {
 	port := "3000"
-	fs, err := fs.New()
+	fs, _ := fs.New()
 	hub := hub.New()
-	ce(err, "fs.New()")
 	r := gin.Default()
 	r.Use(gin.Recovery())
 	r.GET("/ws", func(c *gin.Context) {
-		conn, err := websocket.Upgrade(c.Writer, c.Request, c.Writer.Header(), 1024, 1024)
-		ce(err, "websocket.Upgrade")
+		conn, _ := websocket.Upgrade(c.Writer, c.Request, c.Writer.Header(), 1024, 1024)
 		hub.AddConn(conn)
 	})
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(307, "/draw")
 	})
 	r.StaticFS("/draw", fs)
-	hostname, err := os.Hostname()
-	ce(err, "os.Hostname")
+	hostname, _ := os.Hostname()
 	log.Printf("Listening on http://%[1]s:%[2]s/ , http://localhost:%[2]s/\n", hostname, port)
 	r.Run(":" + port)
 }

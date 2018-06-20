@@ -9,6 +9,7 @@ import (
 type msg struct {
 	S [4]int `json:"s"`
 	C int    `json:"c"`
+	W int    `json:"w"`
 }
 
 // Hub is the class that takes care of getting all connections
