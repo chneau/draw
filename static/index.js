@@ -50,8 +50,13 @@ window.onload = () => {
         event.preventDefault();
     };
     canvas.onmousewheel = (event) => {
-        if (++color <= 0) {
-            color = 0;
+        if (event.deltaY < 0) {
+            --color;
+            if (color < 0) {
+                color = kelly.length - 1;
+            }
+        } else {
+            ++color;
         }
         color = color % kelly.length;
         event.preventDefault();
