@@ -4,7 +4,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"runtime"
+
+	"github.com/mattn/go-colorable"
 
 	"github.com/chneau/draw/pkg/hub"
 
@@ -17,9 +18,7 @@ import (
 func init() {
 	gracefulExit()
 	gin.SetMode(gin.ReleaseMode)
-	if runtime.GOOS == "windows" {
-		gin.DisableConsoleColor()
-	}
+	gin.DefaultWriter = colorable.NewColorableStdout()
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
@@ -39,7 +38,10 @@ func gracefulExit() {
 }
 
 func main() {
-	port := "80"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	fs, _ := fs.New()
 	hub := hub.New()
 	r := gin.Default()
