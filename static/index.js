@@ -6,7 +6,8 @@ window.onload = () => {
     let ctx = canvas.getContext("2d");
     ctx.canvas.width = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
-    let socket = new WebSocket(`ws://${location.host}/ws`);
+    let protocol = location.protocol.match(/^https/) ? "wss" : "ws";
+    let socket = new WebSocket(`${protocol}://${location.host}/ws`);
     let color = 0;
     let indexLineWidth = 1;
     var previous = null;
@@ -24,17 +25,31 @@ window.onload = () => {
     };
 
 
+    // // WIP
+    // canvas.ontouchmove = (event) => {
+    //     event.preventDefault();
+    //     if (event.touches != null) {
+    //         var touch = event.touches[0];
+    //         if (previous != null) {
+    //             socket.send(JSON.stringify({ s: [previous.x, previous.y, touch.clientX, touch.clientY], c: color, w: indexLineWidth }));
+    //         }
+    //         previous = { x: touch.clientX, y: touch.clientY };
+    //         return;
+    //     }
+    //     previous = null;
+    // }
+
     canvas.onmousemove = (event) => {
+        event.preventDefault();
         if (event.which == 1) {
             if (previous != null) {
-                socket.send(JSON.stringify({ s: [previous.pageX, previous.pageY, event.pageX, event.pageY], c: color, w: indexLineWidth }));
+                socket.send(JSON.stringify({ s: [previous.x, previous.y, event.clientX, event.clientY], c: color, w: indexLineWidth }));
             }
-            previous = event;
+            previous = { x: event.clientX, y: event.clientY };
             return;
         }
         previous = null;
     };
-
 
     canvas.onmouseup = (event) => {
         if (event.which == 3) {
