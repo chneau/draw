@@ -39,6 +39,7 @@ func gracefulExit() {
 }
 
 func main() {
+	log.Println("Oesh alors lol")
 	port := "3000"
 	fs, _ := fs.New()
 	hub := hub.New()
