@@ -13,5 +13,3 @@
 
 bin
 *.trace
-vendor/*
-!vendor/vendor.json
