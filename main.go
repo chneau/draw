@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 	"os/signal"
 
@@ -54,7 +55,34 @@ func main() {
 		c.Redirect(307, "/draw")
 	})
 	r.StaticFS("/draw", fs)
-	hostname, _ := os.Hostname()
-	log.Printf("Listening on http://%[1]s:%[2]s/ , http://localhost:%[2]s/\n", hostname, port)
+	printIP(port)
 	r.Run(":" + port)
+}
+
+func printIP(port string) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		panic(err)
+	}
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			panic(err)
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip.To4() == nil {
+				continue
+			}
+			log.Printf("Listening on (%s) http://%s:%s/", i.Name, ip, port)
+		}
+	}
+	hostname, _ := os.Hostname()
+	log.Printf("Listening on (hostname) http://%[1]s:%[2]s/", hostname, port)
 }
