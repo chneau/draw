@@ -12,6 +12,9 @@ window.onload = () => {
     let indexLineWidth = 1;
     var previous = null;
 
+    document.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    }, { passive: false });
 
     socket.onmessage = (event) => {
         let msgs = JSON.parse(event.data);
@@ -25,31 +28,31 @@ window.onload = () => {
             ctx.stroke();
         }
     };
-
     canvas.onpointermove = (event) => {
         if (event.pressure == 0) {
             return;
         }
-        event.preventDefault();
         if (previous != null) {
             if (socket.readyState !== socket.OPEN) {
                 location.reload(true);
             }
-            socket.send(JSON.stringify({ s: [previous.x, previous.y, event.clientX, event.clientY], c: color, w: indexLineWidth }));
+            socket.send(JSON.stringify({ s: [previous.x, previous.y, event.offsetX | 0, event.offsetY | 0], c: color, w: indexLineWidth }));
+            legend.innerHTML = JSON.stringify({ s: [previous.x, previous.y, event.offsetX | 0, event.offsetY | 0], c: color, w: indexLineWidth });
         }
-        previous = { x: event.clientX, y: event.clientY };
+        previous = { x: event.offsetX | 0, y: event.offsetY | 0 };
         event.preventDefault();
         event.stopPropagation();
     };
 
     canvas.onpointerup = (event) => {
         socket.send(JSON.stringify({ s: [previous.x, previous.y, previous.x, previous.y], c: color, w: indexLineWidth }));
+        legend.innerHTML = JSON.stringify({ s: [previous.x, previous.y, event.offsetX | 0, event.offsetY | 0], c: color, w: indexLineWidth });
         previous = null;
         event.preventDefault();
         event.stopPropagation();
     };
     canvas.onpointerdown = (event) => {
-        previous = { x: event.clientX, y: event.clientY };
+        previous = { x: event.offsetX | 0, y: event.offsetY | 0 };
         event.preventDefault();
         event.stopPropagation();
     };
