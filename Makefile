@@ -2,16 +2,16 @@
 .ONESHELL:
 .NOTPARALLEL:
 .EXPORT_ALL_VARIABLES:
-.PHONY: run deps build clean exec dockerbuild
+.PHONY: run exec build_public build clean deps heroku_init heroku dev docker_build
 
 NAME=$(shell basename $(CURDIR))
 
-run: buildPublic build exec clean
+run: build_public build exec clean
 
 exec:
 	./bin/${NAME}
 
-buildPublic:
+build_public:
 	go-bindata -fs -pkg static -o pkg/static/static.go -prefix "static/" static
 
 build:
@@ -35,5 +35,5 @@ heroku:
 dev:
 	go get -u -v github.com/go-bindata/go-bindata/...
 
-dockerbuild:
+docker_build:
 	docker build -t chneau/draw:latest .
