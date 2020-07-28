@@ -14,14 +14,16 @@ window.onload = () => {
 
 
     socket.onmessage = (event) => {
-        let msg = JSON.parse(event.data);
-        ctx.strokeStyle = kelly[msg.c];
-        ctx.lineWidth = lineWidths[msg.w];
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(msg.s[0], msg.s[1]);
-        ctx.lineTo(msg.s[2], msg.s[3]);
-        ctx.stroke();
+        let msgs = JSON.parse(event.data);
+        for (const msg of msgs) {
+            ctx.strokeStyle = kelly[msg.c];
+            ctx.lineWidth = lineWidths[msg.w];
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(msg.s[0], msg.s[1]);
+            ctx.lineTo(msg.s[2], msg.s[3]);
+            ctx.stroke();
+        }
     };
 
     canvas.onpointermove = (event) => {
@@ -36,20 +38,30 @@ window.onload = () => {
             socket.send(JSON.stringify({ s: [previous.x, previous.y, event.clientX, event.clientY], c: color, w: indexLineWidth }));
         }
         previous = { x: event.clientX, y: event.clientY };
+        event.preventDefault();
+        event.stopPropagation();
     };
 
     canvas.onpointerup = (event) => {
+        socket.send(JSON.stringify({ s: [previous.x, previous.y, previous.x, previous.y], c: color, w: indexLineWidth }));
         previous = null;
+        event.preventDefault();
+        event.stopPropagation();
+    };
+    canvas.onpointerdown = (event) => {
+        previous = { x: event.clientX, y: event.clientY };
+        event.preventDefault();
+        event.stopPropagation();
     };
 
 
     canvas.oncontextmenu = (event) => {
         event.preventDefault();
+        event.stopPropagation();
     };
 
 
     canvas.onmousewheel = (event) => {
-        event.preventDefault();
         if (event.deltaY < 0) {
             ++color;
         } else {
@@ -61,10 +73,12 @@ window.onload = () => {
         color = color % kelly.length;
         legend.innerHTML = lineWidths[indexLineWidth];
         legend.style = `color: ${kelly[color]};`;
+        event.preventDefault();
+        event.stopPropagation();
     };
 
-    document.onkeydown = function(evt) {
-        switch (evt.keyCode) {
+    document.onkeydown = function(event) {
+        switch (event.keyCode) {
             case 87: // w
             case 38: // up
                 ++color;
@@ -94,6 +108,8 @@ window.onload = () => {
         color = color % kelly.length;
         legend.innerHTML = lineWidths[indexLineWidth];
         legend.style = `color: ${kelly[color]};`;
+        // event.preventDefault();
+        // event.stopPropagation();
     };
 
     legend.innerHTML = "use your mouse to draw";

@@ -1,11 +1,12 @@
 body {
     margin: 0px;
     overflow: hidden;
+    max-width: 90%;
 }
 
 #canvas {
-    height: 100vh;
-    width: 100vw;
+    display: "block";
+    touch-action: "none";
 }
 
 #legend {

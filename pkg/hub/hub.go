@@ -3,7 +3,6 @@ package hub
 import (
 	"log"
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -28,7 +27,7 @@ func (h *Hub) keepDispatching() {
 			m := <-h.read
 			for c, mu := range h.conns {
 				mu.Lock()
-				if c.WriteJSON(m) != nil {
+				if c.WriteJSON([]*msg{m}) != nil {
 					delete(h.conns, c)
 					log.Println("ws:", len(h.conns))
 				}
@@ -61,14 +60,9 @@ func (h *Hub) initConn(conn *websocket.Conn) {
 	go func() {
 		mu := h.conns[conn]
 		log.Println("ws:", len(h.conns))
-		for i, c := range h.cache {
-			if i%2 == 0 {
-				time.Sleep(time.Millisecond)
-			}
-			mu.Lock()
-			_ = conn.WriteJSON(c)
-			mu.Unlock()
-		}
+		mu.Lock()
+		_ = conn.WriteJSON(h.cache)
+		mu.Unlock()
 	}()
 
 }
