@@ -3,6 +3,7 @@ package hub
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -15,43 +16,47 @@ type msg struct {
 
 // Hub is the class that takes care of getting all connections
 type Hub struct {
-	conns     map[*websocket.Conn]*sync.Mutex
-	read      chan *msg
-	cache     []*msg
-	CacheSize int
+	conns              map[*websocket.Conn]*sync.Mutex
+	cache              []*msg
+	CacheSize          int
+	LatestModification time.Time
+	room               string
 }
 
-func (h *Hub) keepDispatching() {
-	go func() {
-		for {
-			m := <-h.read
-			for c, mu := range h.conns {
-				mu.Lock()
-				if c.WriteJSON([]*msg{m}) != nil {
-					delete(h.conns, c)
-					log.Println("ws:", len(h.conns))
-				}
-				mu.Unlock()
-			}
-		}
-	}()
+func (h *Hub) Kill() {
+	for c, mu := range h.conns {
+		func() {
+			mu.Lock()
+			defer mu.Unlock()
+			_ = c.Close()
+		}()
+	}
 }
 
-func (h *Hub) keepReading(conn *websocket.Conn) {
+func (h *Hub) broadcast(conn *websocket.Conn) {
 	go func() {
+		defer log.Println(h.room, "Broadcast done")
 		for {
 			m := &msg{}
 			err := conn.ReadJSON(m)
 			if err != nil {
-				break
+				return
 			}
 			h.cache = append(h.cache, m)
 			l := len(h.cache)
 			if l > h.CacheSize {
 				h.cache = h.cache[l-int(float64(h.CacheSize)*0.8) : l]
-				log.Println("Cache resized:", len(h.cache))
+				log.Println(h.room, "Cache resized:", len(h.cache))
 			}
-			h.read <- m
+			for c, mu := range h.conns {
+				mu.Lock()
+				if c.WriteJSON([]*msg{m}) != nil {
+					delete(h.conns, c)
+					log.Println(h.room, "ws:", len(h.conns))
+				}
+				mu.Unlock()
+			}
+			h.LatestModification = time.Now()
 		}
 	}()
 }
@@ -59,10 +64,11 @@ func (h *Hub) keepReading(conn *websocket.Conn) {
 func (h *Hub) initConn(conn *websocket.Conn) {
 	go func() {
 		mu := h.conns[conn]
-		log.Println("ws:", len(h.conns))
+		log.Println(h.room, "ws:", len(h.conns))
 		mu.Lock()
 		_ = conn.WriteJSON(h.cache)
 		mu.Unlock()
+		h.LatestModification = time.Now()
 	}()
 
 }
@@ -70,17 +76,18 @@ func (h *Hub) initConn(conn *websocket.Conn) {
 // AddConn add a connection to the pool of connected
 func (h *Hub) AddConn(conn *websocket.Conn) {
 	h.conns[conn] = &sync.Mutex{}
-	h.keepReading(conn)
+	h.broadcast(conn)
 	h.initConn(conn)
 }
 
 // New returns an instance
-func New() *Hub {
+func New(room string) *Hub {
 	h := &Hub{
-		conns:     map[*websocket.Conn]*sync.Mutex{},
-		read:      make(chan *msg),
-		CacheSize: 5000,
+		conns:              map[*websocket.Conn]*sync.Mutex{},
+		cache:              []*msg{},
+		room:               room,
+		CacheSize:          5000,
+		LatestModification: time.Now(),
 	}
-	h.keepDispatching()
 	return h
 }
