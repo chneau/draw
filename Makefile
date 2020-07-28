@@ -25,6 +25,13 @@ deps:
 	go mod tidy
 	go mod verify
 
+heroku_init:
+	heroku login
+	heroku git:clone -a draw-cool
+
+heroku:
+	git push heroku master
+
 dev:
 	go get -u -v github.com/go-bindata/go-bindata/...
 
