@@ -3,6 +3,7 @@ package hub
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -60,7 +61,10 @@ func (h *Hub) initConn(conn *websocket.Conn) {
 	go func() {
 		mu := h.conns[conn]
 		log.Println("ws:", len(h.conns))
-		for _, c := range h.cache {
+		for i, c := range h.cache {
+			if i%2 == 0 {
+				time.Sleep(time.Millisecond)
+			}
 			mu.Lock()
 			_ = conn.WriteJSON(c)
 			mu.Unlock()

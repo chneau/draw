@@ -24,48 +24,22 @@ window.onload = () => {
         ctx.stroke();
     };
 
-
-    // // WIP
-    // canvas.ontouchmove = (event) => {
-    //     event.preventDefault();
-    //     if (event.touches != null) {
-    //         var touch = event.touches[0];
-    //         if (previous != null) {
-    //             socket.send(JSON.stringify({ s: [previous.x, previous.y, touch.clientX, touch.clientY], c: color, w: indexLineWidth }));
-    //         }
-    //         previous = { x: touch.clientX, y: touch.clientY };
-    //         return;
-    //     }
-    //     previous = null;
-    // }
-    canvas.onmousemove = (event) => {
-        event.preventDefault();
-        if (event.which == 1) {
-            if (previous != null) {
-                if (socket.readyState !== socket.OPEN) {
-                    location.reload(true);
-                }
-                socket.send(JSON.stringify({ s: [previous.x, previous.y, event.clientX, event.clientY], c: color, w: indexLineWidth }));
-            }
-            previous = { x: event.clientX, y: event.clientY };
+    canvas.onpointermove = (event) => {
+        if (event.pressure == 0) {
             return;
         }
-        previous = null;
+        event.preventDefault();
+        if (previous != null) {
+            if (socket.readyState !== socket.OPEN) {
+                location.reload(true);
+            }
+            socket.send(JSON.stringify({ s: [previous.x, previous.y, event.clientX, event.clientY], c: color, w: indexLineWidth }));
+        }
+        previous = { x: event.clientX, y: event.clientY };
     };
 
-    canvas.onmouseup = (event) => {
-        if (event.which == 3) {
-            ++indexLineWidth;
-        }
-        if (event.which == 2) {
-            --indexLineWidth;
-            if (indexLineWidth < 0) {
-                indexLineWidth = lineWidths.length - 1;
-            }
-        }
-        indexLineWidth = indexLineWidth % lineWidths.length;
-        legend.innerHTML = lineWidths[indexLineWidth];
-        legend.style = `color: ${kelly[color]};`;
+    canvas.onpointerup = (event) => {
+        previous = null;
     };
 
 

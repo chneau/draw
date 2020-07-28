@@ -42,7 +42,12 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(307, "/draw")
 	})
-	r.StaticFS("/draw", static.AssetFile())
+	if _, err := os.Stat("static/index.html"); !os.IsNotExist(err) {
+		log.Println("using static folder")
+		r.Static("/draw", "static")
+	} else {
+		r.StaticFS("/draw", static.AssetFile())
+	}
 	hostname, _ := os.Hostname()
 	log.Printf("Listening on (hostname) http://%[1]s:%[2]s/", hostname, port)
 	err := r.Run(":" + port)
