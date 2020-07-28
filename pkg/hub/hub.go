@@ -1,22 +1,24 @@
 package hub
 
 import (
+	"log"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 type msg struct {
-	S [4]int `json:"s"`
-	C int    `json:"c"`
-	W int    `json:"w"`
+	S [4]uint16 `json:"s"`
+	C uint8     `json:"c"` // color
+	W uint8     `json:"w"` // width
 }
 
 // Hub is the class that takes care of getting all connections
 type Hub struct {
-	conns map[*websocket.Conn]*sync.Mutex
-	read  chan *msg
-	cache []*msg
+	conns     map[*websocket.Conn]*sync.Mutex
+	read      chan *msg
+	cache     []*msg
+	CacheSize int
 }
 
 func (h *Hub) keepDispatching() {
@@ -27,6 +29,7 @@ func (h *Hub) keepDispatching() {
 				mu.Lock()
 				if c.WriteJSON(m) != nil {
 					delete(h.conns, c)
+					log.Println("ws:", len(h.conns))
 				}
 				mu.Unlock()
 			}
@@ -43,10 +46,11 @@ func (h *Hub) keepReading(conn *websocket.Conn) {
 				break
 			}
 			h.cache = append(h.cache, m)
-			// l := len(h.cache)
-			// if l > 100000 {
-			// 	h.cache = h.cache[l-90000 : l]
-			// }
+			l := len(h.cache)
+			if l > h.CacheSize {
+				h.cache = h.cache[l-int(float64(h.CacheSize)*0.8) : l]
+				log.Println("Cache resized:", len(h.cache))
+			}
 			h.read <- m
 		}
 	}()
@@ -55,9 +59,10 @@ func (h *Hub) keepReading(conn *websocket.Conn) {
 func (h *Hub) initConn(conn *websocket.Conn) {
 	go func() {
 		mu := h.conns[conn]
+		log.Println("ws:", len(h.conns))
 		for _, c := range h.cache {
 			mu.Lock()
-			conn.WriteJSON(c)
+			_ = conn.WriteJSON(c)
 			mu.Unlock()
 		}
 	}()
@@ -74,8 +79,9 @@ func (h *Hub) AddConn(conn *websocket.Conn) {
 // New returns an instance
 func New() *Hub {
 	h := &Hub{
-		conns: map[*websocket.Conn]*sync.Mutex{},
-		read:  make(chan *msg),
+		conns:     map[*websocket.Conn]*sync.Mutex{},
+		read:      make(chan *msg),
+		CacheSize: 5000,
 	}
 	h.keepDispatching()
 	return h

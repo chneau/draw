@@ -38,11 +38,13 @@ window.onload = () => {
     //     }
     //     previous = null;
     // }
-
     canvas.onmousemove = (event) => {
         event.preventDefault();
         if (event.which == 1) {
             if (previous != null) {
+                if (socket.readyState !== socket.OPEN) {
+                    location.reload(true);
+                }
                 socket.send(JSON.stringify({ s: [previous.x, previous.y, event.clientX, event.clientY], c: color, w: indexLineWidth }));
             }
             previous = { x: event.clientX, y: event.clientY };
@@ -87,7 +89,7 @@ window.onload = () => {
         legend.style = `color: ${kelly[color]};`;
     };
 
-    document.onkeydown = function (evt) {
+    document.onkeydown = function(evt) {
         switch (evt.keyCode) {
             case 87: // w
             case 38: // up
