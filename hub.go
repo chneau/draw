@@ -1,4 +1,4 @@
-package hub
+package main
 
 import (
 	"log"
@@ -80,8 +80,8 @@ func (h *Hub) AddConn(conn *websocket.Conn) {
 	h.initConn(conn)
 }
 
-// New returns an instance
-func New(room string) *Hub {
+// NewHub returns an instance
+func NewHub(room string) *Hub {
 	h := &Hub{
 		conns:              map[*websocket.Conn]*sync.Mutex{},
 		cache:              []*msg{},

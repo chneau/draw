@@ -1,10 +1,13 @@
-# build stage
-ARG BASE=/go/src/github.com/chneau/draw
-FROM golang:alpine AS build-env
-ARG BASE
-ADD . $BASE
-RUN cd $BASE && CGO_ENABLED=0 go build -trimpath -o /draw -ldflags '-s -w -extldflags "-static"'
+FROM golang:alpine AS dependencies
+WORKDIR /app
+COPY go.mod go.sum .
+RUN go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get
 
-FROM alpine AS prod-ready
-COPY --from=build-env /draw /draw
-ENTRYPOINT [ "/draw" ]
+FROM dependencies AS builder
+COPY . .
+RUN go build -o web
+
+FROM alpine AS final
+ENV GIN_MODE=release
+COPY --from=builder /app/web .
+ENTRYPOINT ["/web"]
